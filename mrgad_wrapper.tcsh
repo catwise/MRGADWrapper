@@ -17,11 +17,9 @@ echo This Wrapper will wrap around and run MRGAD
 @ i = 0
 set rsyncSet = "false"
 while ($i < $# + 1)
-     echo on the argument $argv[$i]
       if("$argv[$i]" == "-rsync") then 
         echo Argument "-rsync" detected. Will rsync Tyto, Otus, and Athene.
         set rsyncSet = "true"
-
       else if("$argv[$i]" == "-startTime") then 
 	 echo Argument "-startTime" detected.
      	@ temp = $i + 1
@@ -35,7 +33,7 @@ while ($i < $# + 1)
 	else
                 echo please enter startTime after '-startTime'
      	endif
-	@ i += 1
+	@ i += 1  # skip next i since next argument was already read above 
       endif
       @ i +=  1
 end
@@ -83,9 +81,9 @@ else if ($1 == 1) then #($# == 2 && $1 == 1) then
 else if ($1 == 2) then
 	set InputsList = $3
         set ParentDir = $2
+	echo
         echo Inputs list ==  $InputsList
         echo Parent directory == $ParentDir
-        echo
         echo "Is this the correct input list and Parent directory? (y/n)"
         set userInput = $<
     
@@ -194,9 +192,9 @@ foreach RaRaRaDir ($InputDir*/) #for each directory in InputDir, get each RadecI
 	set date_t = `date +"%Y%m%d_%H%M%S"`
 	mkdir -p ${CatWISEDir}/ProgramTerminalOutput/
         if($rsyncSet == "true") then
-		((echo y | source mrgad_wrapper.tcsh 3 $ParentDir $RadecID -rsync -nl $arg_nl -startTime $startTime) |& tee -a ${CatWISEDir}/ProgramTerminalOutput/mrgadwrapperlog_${RadecID}_${date_t}.txt) & 
+		((echo y | source mrgad_wrapper.tcsh 3 $ParentDir $RadecID -rsync -startTime $startTime) |& tee -a ${CatWISEDir}/ProgramTerminalOutput/mrgadwrapperlog_${RadecID}_${date_t}.txt) & 
 	else
-		((echo y | source mrgad_wrapper.tcsh 3 $ParentDir $RadecID -nl $arg_nl -startTime $startTime) |& tee -a ${CatWISEDir}/ProgramTerminalOutput/mrgadwrapperlog_${RadecID}_${date_t}.txt) & 
+		((echo y | source mrgad_wrapper.tcsh 3 $ParentDir $RadecID -startTime $startTime) |& tee -a ${CatWISEDir}/ProgramTerminalOutput/mrgadwrapperlog_${RadecID}_${date_t}.txt) & 
 	endif
 
 		if(`ps -ef | grep mrgad_wrapper | wc -l` > 14) then
@@ -232,8 +230,6 @@ Mode2:
         set RadecID = `echo $line`
         set RaRaRa = `echo $RadecID | awk '{print substr($0,0,3)}'`
 
-        echo "RaRaRa == "$RaRaRa
-        echo "RadecID == "$RadecID
 
 	set CatWISEDir = $ParentDir/CatWISE/$RaRaRa/$RadecID/Full/ 
 	set TileDir = $ParentDir/CatWISE/$RaRaRa/$RadecID/
@@ -254,9 +250,9 @@ Mode2:
 	echo "mkdir -p ${CatWISEDir}/ProgramTerminalOutput/"
 	mkdir -p ${CatWISEDir}/ProgramTerminalOutput/
         if($rsyncSet == "true") then
-		((echo y | source mrgad_wrapper.tcsh 3 $ParentDir $RadecID -rsync -nl $arg_nl -startTime $startTime) |& tee -a ${CatWISEDir}/ProgramTerminalOutput/mrgadwrapperlog_${RadecID}_${date_t}.txt) & 
+		((echo y | source mrgad_wrapper.tcsh 3 $ParentDir $RadecID -rsync -startTime $startTime) |& tee -a ${CatWISEDir}/ProgramTerminalOutput/mrgadwrapperlog_${RadecID}_${date_t}.txt) & 
 	else
-		(echo y | ./mrgad_wrapper.tcsh 3 $ParentDir $RadecID -nl $arg_nl -startTime $startTime |& tee -a ${CatWISEDir}/ProgramTerminalOutput/mrgadwrapperlog_${RadecID}_${date_t}.txt) &  
+		(echo y | ./mrgad_wrapper.tcsh 3 $ParentDir $RadecID -startTime $startTime |& tee -a ${CatWISEDir}/ProgramTerminalOutput/mrgadwrapperlog_${RadecID}_${date_t}.txt) &  
 	endif
 	#TODO have a set status here that catches errors? if 3 works, then 2 should work recursively using 3. However, we need to catch these errors
 	
@@ -284,24 +280,17 @@ Mode2:
 
 Mode3:
 	set RaRaRa = `echo $RadecID | awk '{print substr($0,0,3)}'`
-	set UnWISEDir = $ParentDir/UnWISE/$RaRaRa/$RadecID/
 	set CatWISEDir = $ParentDir/CatWISE/$RaRaRa/$RadecID/Full/ 
 	set TileDir = $ParentDir/CatWISE/$RaRaRa/$RadecID/
 	set AsceDir = $ParentDir/CatWISE/$RaRaRa/$RadecID/Full/Asce/ 
 	set DescDir = $ParentDir/CatWISE/$RaRaRa/$RadecID/Full/Desc/ 
-	echo "\033[1;31m Creating temp dir for $RadecID \033[0m"
+        echo "    RaRaRa == "$RaRaRa
+        echo "    RadecID == "$RadecID
+	echo "    Creating temp dir for $RadecID"
 	mkdir -p ${CatWISEDir}/ProgramTerminalOutput/DELETEME
 	echo "DONE CREATING DELETEME/"
 
-	chmod -R 775 $CatWISEDir
-	
 	#Error Checking
-	if(! -d $UnWISEDir) then
-                echo ERROR: $UnWISEDir does not exist.
-                echo
-                echo Exiting...
-                exit
-        endif
 	if(! -d $CatWISEDir) then
                 echo ERROR: $CatWISEDir does not exist.
                 echo
@@ -309,29 +298,7 @@ Mode3:
                 exit
         endif 
 	
-	##***READ CAUTION***, the cname == root name == unwise-0657p151... thus, same as the "base" in frames_list.tbl 
-	#automatically generates frames_list.tbl
-	set rootname = unwise-$RadecID
-	#print tbl header in frames_list.tbl
-	#echo "|  path              |      base     | b1 | b2 | b3 | b4 |" > ${wrapperDir}/frames_list.tbl
-	#echo "|   c                |       c       |  i |  i |  i |  i |" >> ${wrapperDir}/frames_list.tbl
-	#echo "|                    |" >> ${wrapperDir}/frames_list.tbl
-	#echo "|                    |" >> ${wrapperDir}/frames_list.tbl
-	#print each epoch in frames_list.tbl
-	#set fullDir = ${TileDir}Full/
-        #foreach subDir ($TileDir*/)
-	#	echo "Subdir == ${subDir}"
-	#	echo "fullDir == ${fullDir}"
-	#	if($subDir != ${fullDir}) then
-	#		echo $subDir $rootname 1 1 0 0 >> ${wrapperDir}/frames_list.tbl
-	#	endif
-	#end
-	
-       #GenWFL Makes frames list for Asce and Desc	
-	mkdir -p ${AsceDir}
-	echo  mkdir -p ${AsceDir}
-	mkdir -p ${DescDir}	
-	echo  mkdir -p ${DescDir}
+        ###GenWFL Makes frames list for Asce and Desc	
 	echo
 	echo START GENWFL
 	/Users/CatWISE/genwfl -t $TileDir -oa ${AsceDir}/frames_list_Asce.tbl -od ${DescDir}frames_list_Desc.tbl -ox ${CatWISEDir}/epochs.tbl -td ${CatWISEDir}/ProgramTerminalOutput/DELETEME 
@@ -345,13 +312,16 @@ Mode3:
 	endif
 	echo END GENWFL	
 
-	#replaces inserting escape character on all existing "/"
-	set editedUnWISEDir=`echo $UnWISEDir | sed 's/\//\\\//g'`
-	set editedCatWISEDir=`echo $CatWISEDir | sed 's/\//\\\//g'`
-	set editedAsceDir=`echo $AsceDir | sed 's/\//\\\//g'`
-	set editedDescDir=`echo $DescDir | sed 's/\//\\\//g'`
-	set editedTileDir=`echo $TileDir | sed 's/\//\\\//g'`
-
+	
+	echo "gzip -f ${CatWISEDir}/stf-mrg13_asce.Opt-1a-rf1.tbl"
+	echo "gzip -f ${CatWISEDir}/stf-mrg13_desc.Opt-1a-rf2.tbl"
+	echo "gunzip -f ${AsceDir}/stf-mdex_asce.Opt-1a.tbl"
+        echo "gunzip -f ${DescDir}/stf-mdex_desc.Opt-1a.tbl"
+	
+	gunzip -f ${CatWISEDir}/stf-mrg13_asce.Opt-1a-rf1.tbl 
+	gunzip -f ${CatWISEDir}/stf-mrg13_desc.Opt-1a-rf2.tbl
+	gunzip -f ${AsceDir}/stf-mdex_asce.Opt-1a.tbl
+        gunzip -f ${DescDir}/stf-mdex_desc.Opt-1a.tbl
 
 
 	### gsa
@@ -382,9 +352,6 @@ Mode3:
                 set failedProgram = "mrgad"
                 goto Failed
         endif
-
-        #give all permissions to /CatWISE/<RaRaRa>/<RadecID>/Full/ directory and all its subdirectories
-	chmod -R 775  $CatWISEDir	
        
         #steps to save disk space	
 	#gzip output
@@ -395,8 +362,6 @@ Mode3:
 	gzip -f ${DescDir}/stf-mdex_desc.Opt-1a.tbl	
        #rm output 	
 	rm -f ${CatWISEDir}/gsa.tbl 
-	rm -f ${AsceDir}/mdex_asce.Opt-1a.tbl 
-	rm -f ${DescDir}/mdex_desc.Opt-1a.tbl 
 
        #rsync folders from Tyto, Athene, Otus
         if($rsyncSet == "true") then
@@ -458,7 +423,7 @@ Mode3:
 	goto Done
 
 Done:
-echo WPHOTWrapper Mode: ${1} Done!
+echo MRGADWrapper Mode: ${1} Done!
 echo
 set endTime = `date '+%m/%d/%Y %H:%M:%S'`
 echo Wrapper Mode ${1} Ended at:
