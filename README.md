@@ -2,7 +2,7 @@
 Wrapper for mrgad
 
 ## Description
-  This wrapper will automatically wrap arround a given input of tiles and run MRGAD. Must follow _CatWISE directory structure_.
+  This wrapper will automatically run instance(s) of MRGAD. Must follow _CatWISE directory structure_.
     
 ## How to Run Modes
 * Mode 1: Everything Mode
