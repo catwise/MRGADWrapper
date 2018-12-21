@@ -420,14 +420,16 @@ Mode3:
         	endif
         endif
 
+	echo "    Output Dir: ${CatWISEDir}/${RadecID}_opt1_${date_t}.tbl"
+	
 	goto Done
 
 Done:
-echo MRGADWrapper Mode: ${1} Done!
+echo "    MRGADWrapper Mode: ${1} Done!"
 echo
 set endTime = `date '+%m/%d/%Y %H:%M:%S'`
-echo Wrapper Mode ${1} Ended at:
-echo $endTime
+echo "    Wrapper Mode ${1} Ended at:"
+echo "    $endTime"
 exit
 
 #program jumps here if a program returns an exit status 32(Warning) or 64(Error)
